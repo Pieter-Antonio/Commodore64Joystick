@@ -6,7 +6,7 @@ The device manifests itself as a HID joystick for compatibility in games. The po
 
 ## Installation
 
-Copy the UF2 binary that you can download from the releases onto the Raspberry Pi Pico via USB in BOOTSEL mode.
+Copy the UF2 binary that you can download from the releases onto the Raspberry Pi Pico via USB in BOOTSEL mode. The used pins are defined in the Commodore64Joystick.cpp file, this shows you which pin on the DB9 connector corresponds to which GPIO pin on the Raspberry Pi Pico.
 
 ### Compiling on Linux
 Make sure the Pico C/C++ SDK is installed and available in your PATH
@@ -19,3 +19,7 @@ Make sure the Pico C/C++ SDK is installed and available in your PATH
     make -j4
 
 Finally, copy the generated UF2 file to the Raspberry Pi Pico in BOOTSEL mode.
+
+## Use in another project
+
+If you want to use this code in your own project, you can just copy the Joystick class and call it from your own main function.
