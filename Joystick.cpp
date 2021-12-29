@@ -6,7 +6,7 @@ Joystick::Joystick(uint8_t DB9Pin1, uint8_t DB9Pin2, uint8_t DB9Pin3, uint8_t DB
     tusb_init();
     printf("HID Device Initialised!");
 
-    Pins = {
+    const PinDict Pins = {
         {(std::string)"UP", DB9Pin1},
         {(std::string)"DOWN", DB9Pin2},
         {(std::string)"LEFT", DB9Pin3},
@@ -37,149 +37,34 @@ void Joystick::ResetAll() {
     _y_axis = 0;
 }
 
-void Joystick::ResetAxis(Joystick::Axis AxisLetter) {
-    if (AxisLetter == x) {
-        _x_axis = 0;
-    }
-    else if (AxisLetter == y) {
-        _y_axis = 0;
-    }
-}
-
 void Joystick::ResetButton(Joystick::Button ButtonNumber) {
     uint32_t bit = 1;
-    bit = bit << ButtonNumber;
-    _buttons = _buttons & (~bit);
-}
-
-void Joystick::SetAxis(Joystick::Axis AxisLetter, Joystick::Direction DirectionNumber) {
-    if (AxisLetter == x) {
-        _x_axis = DirectionNumber;
-    }
-    else if (AxisLetter == y) {
-        _y_axis = DirectionNumber;
+    if (ButtonNumber < 32) {
+        bit = bit << ButtonNumber;
+        _buttons = _buttons & (~bit);
     }
 }
 
 void Joystick::SetButton(Joystick::Button ButtonNumber) {
     uint32_t bit = 1;
-    bit = bit << ButtonNumber;
-    _buttons = _buttons | bit;
-}
-
-bool Joystick::CheckDirection(Joystick::Axis AxisLetter, Joystick::Direction DirectionNumber) {
-    if (AxisLetter == x) {
-        if (_x_axis == DirectionNumber) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    else if (AxisLetter == y) {
-        if (_y_axis == DirectionNumber) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return false;
+    if (ButtonNumber < 32) {
+        bit = bit << ButtonNumber;
+        _buttons = _buttons | bit;
     }
 }
 
-bool Joystick::CheckButton(Joystick::Button ButtonNumber) {
-    uint32_t bit = 1;
-    bit = bit << ButtonNumber;
-
-    if (_buttons & bit) {
-        return true;
-    }
-
-    else {
-        return false;
-    }
+void Joystick::SetPosition(Joystick::Position PositionStruct) {
+    _x_axis = PositionStruct.X;
+    _y_axis = PositionStruct.Y;
 }
 
 Joystick::Status Joystick::GetStatus() {
     Status output;
-    output.X = _x_axis;
-    output.Y = _y_axis;
+    output.Stick.X = _x_axis;
+    output.Stick.Y = _y_axis;
     output.Buttons = _buttons;
 
     return output;
-}
-
-void Joystick::ReadInputs() {
-    // If the stick is pressed, but was not
-    if ( ( !gpio_get(Pins["UP"]) ) && ( !CheckDirection(y, Up) ) ) {
-        SetAxis(y, Up);
-    }
-
-    else if ( ( !gpio_get(Pins["DOWN"]) ) && ( !CheckDirection(y, Down) ) ) {
-        SetAxis(y, Down);
-    }
-
-    if ( ( !gpio_get(Pins["LEFT"]) ) && ( !CheckDirection(x, Left) ) ) {
-        SetAxis(x, Left);
-    }
-
-    else if ( ( !gpio_get(Pins["RIGHT"]) ) && ( !CheckDirection(x, Right) ) ) {
-        SetAxis(x, Right);
-    }
-
-    // If the button is pressed, but was not
-    if ( ( !gpio_get(Pins["FIRE"]) ) && ( !CheckButton(Fire) ) ) {
-        SetButton(Fire);
-    }
-
-    if ( ( !gpio_get(Pins["EXTRA1"]) ) && ( !CheckButton(ExtraButton1) ) ) {
-        SetButton(ExtraButton1);
-    }
-
-    if ( ( !gpio_get(Pins["EXTRA2"]) ) && ( !CheckButton(ExtraButton2) ) ) {
-        SetButton(ExtraButton2);
-    }
-
-    if ( ( !gpio_get(Pins["EXTRA3"]) ) && ( !CheckButton(ExtraButton3) ) ) {
-        SetButton(ExtraButton3);
-    }
-
-    if ( ( !gpio_get(Pins["EXTRA4"]) ) && ( !CheckButton(ExtraButton4) ) ) {
-        SetButton(ExtraButton4);
-    }
-
-    // If the stick is not pressed, but was previously
-
-    if ( ( ( gpio_get(Pins["UP"]) ) && ( CheckDirection(y, Up) ) ) || ( ( gpio_get(Pins["DOWN"]) ) && ( CheckDirection(y, Down) ) ) ) {
-        ResetAxis(y);
-    }
-
-    if ( ( ( gpio_get(Pins["LEFT"]) ) && ( CheckDirection(x, Left) ) ) || ( ( gpio_get(Pins["RIGHT"]) ) && ( CheckDirection(x, Right) ) ) ) {
-        ResetAxis(x);
-    }
-
-    // If the button is not pressed, but was previously
-    if ( ( gpio_get(Pins["FIRE"]) ) && ( CheckButton(Fire) ) ) {
-        ResetButton(Fire);
-    }
-
-    if ( ( gpio_get(Pins["EXTRA1"]) ) && ( CheckButton(ExtraButton1) ) ) {
-        ResetButton(ExtraButton1);
-    }
-
-    if ( ( gpio_get(Pins["EXTRA2"]) ) && ( CheckButton(ExtraButton2) ) ) {
-        ResetButton(ExtraButton2);
-    }
-
-    if ( ( gpio_get(Pins["EXTRA3"]) ) && ( CheckButton(ExtraButton3) ) ) {
-        ResetButton(ExtraButton3);
-    }
-
-    if ( ( gpio_get(Pins["EXTRA4"]) ) && ( CheckButton(ExtraButton4) ) ) {
-        ResetButton(ExtraButton4);
-    }
 }
 
 void Joystick::USBUpdate() {
@@ -192,6 +77,89 @@ void Joystick::USBUpdate() {
     }
 
     tud_task();
+}
+
+void Joystick::ReadInputs() {
+    PinValues.clear();
+
+    uint32_t Reading = gpio_get_all();
+
+    for (auto const& [PinName, Pin] : Pins) {
+        bool value = 0;
+        uint32_t bit = 1;
+        bit = bit << Pin;
+        value = (bit & Reading);
+        PinValues.emplace(PinName, value);
+    }
+
+    if (PinValues["UP"]) {
+        if (PinValues["LEFT"]) {
+            CurrentPosition = UpLeft;
+        }
+        else if (PinValues["RIGHT"]) {
+            CurrentPosition = UpRight;
+        }
+        else {
+            CurrentPosition = Up;
+        }
+    }
+    else if (PinValues["DOWN"]) {
+        if (PinValues["LEFT"]) {
+            CurrentPosition = DownLeft;
+        }
+        else if (PinValues["RIGHT"]) {
+            CurrentPosition = DownRight;
+        }
+        else {
+            CurrentPosition = Down;
+        }
+    }
+    else if (PinValues["LEFT"]) {
+        CurrentPosition = Left;
+    }
+    else if (PinValues["RIGHT"]) {
+        CurrentPosition = Right;
+    }
+    else {
+        CurrentPosition = Centre;
+    }
+
+    SetPosition(CurrentPosition);
+
+    if (PinValues["FIRE"]) {
+        SetButton(Fire);
+    }
+    else {
+        ResetButton(Fire);
+    }
+
+    if (PinValues["EXTRA1"]) {
+        SetButton(ExtraButton1);
+    }
+    else {
+        ResetButton(ExtraButton1);
+    }
+
+    if (PinValues["EXTRA2"]) {
+        SetButton(ExtraButton2);
+    }
+    else {
+        ResetButton(ExtraButton2);
+    }
+
+    if (PinValues["EXTRA3"]) {
+        SetButton(ExtraButton3);
+    }
+    else {
+        ResetButton(ExtraButton3);
+    }
+
+    if (PinValues["EXTRA4"]) {
+        SetButton(ExtraButton4);
+    }
+    else {
+        ResetButton(ExtraButton4);
+    }
 }
 
 //--------------------------------------------------------------------+

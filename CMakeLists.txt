@@ -25,7 +25,7 @@ add_executable(Commodore64Joystick
         Joystick.cpp )
 
 pico_set_program_name(Commodore64Joystick "Commodore64Joystick")
-pico_set_program_version(Commodore64Joystick "2.0")
+pico_set_program_version(Commodore64Joystick "2.1")
 
 pico_enable_stdio_uart(Commodore64Joystick 1)
 pico_enable_stdio_usb(Commodore64Joystick 0)
