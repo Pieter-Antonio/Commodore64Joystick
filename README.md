@@ -21,7 +21,10 @@ Copy the UF2 binary that you can download from the releases onto the Raspberry P
 ### Compiling on Linux
 Make sure the Pico C/C++ SDK is installed and available in your PATH (my install location is /usr/share/pico-sdk as defined in [pico_sdk_import.cmake](pico_sdk_import.cmake)). You also need the arm-none-eabi-gcc compiler.
 
+There is a chance the main branch won't build due to some bugs, so better to check out a release tag for a working version.
+
     git clone https://github.com/Pieter-Antonio/Commodore64Joystick.git
+    git checkout v2.0
     cd Commodore64Joystick
     mkdir build
     cd build

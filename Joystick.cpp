@@ -6,7 +6,7 @@ Joystick::Joystick(uint8_t DB9Pin1, uint8_t DB9Pin2, uint8_t DB9Pin3, uint8_t DB
     tusb_init();
     printf("HID Device Initialised!");
 
-    const PinDict Pins = {
+    PinDict Pins = {
         {(std::string)"UP", DB9Pin1},
         {(std::string)"DOWN", DB9Pin2},
         {(std::string)"LEFT", DB9Pin3},
@@ -82,14 +82,13 @@ void Joystick::USBUpdate() {
 void Joystick::ReadInputs() {
     PinValues.clear();
 
-    uint32_t Reading = gpio_get_all();
+    uint32_t reading = gpio_get_all();
 
     for (auto const& [PinName, Pin] : Pins) {
-        bool value = 0;
         uint32_t bit = 1;
         bit = bit << Pin;
-        value = (bit & Reading);
-        PinValues.emplace(PinName, value);
+        bool value = (bit & reading);
+        PinValues.insert({PinName, value});
     }
 
     if (PinValues["UP"]) {

@@ -44,9 +44,9 @@ class Joystick {
         void SetButton(Button ButtonNumber);
         void ResetButton(Button ButtonNumber);
 
-        Joystick::Position CurrentPosition;
+        Position CurrentPosition;
         typedef std::map<std::string, uint8_t> PinDict;
-        const PinDict Pins;
+        PinDict Pins;
         typedef std::map<std::string, bool> PinValueDict;
         PinValueDict PinValues;
         int8_t _x_axis;
